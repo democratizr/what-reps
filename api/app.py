@@ -62,7 +62,7 @@ def index():
     }
 
 
-@app.route('/search/{address}')
+@app.route('/search/{address}', cors=True)
 def searchview(address):
     try:
         return search(address)
