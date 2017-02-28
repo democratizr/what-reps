@@ -17,14 +17,29 @@ class App extends Component {
   }
 }
 
-type Representative = {name: string}
-
-const fed_to_rep = (fed) => {
-  return {name: fed.first_name + ' ' + fed.last_name}
+type Representative = {
+  name: string,
+  title: string,
+  email: string,
+  phone: string
 }
 
-const state_to_rep = (state) => {
-  return {name: state.full_name}
+const transform_fed = (data): Representative => {
+  return {
+    name: `${data.first_name} ${data.last_name} (${data.party})`,
+    title: `Federal ${data.chamber} ${data.district || ''}`,
+    email: `mailto:${data.oc_email}`,
+    phone: `Phone: ${data.phone}`
+  }
+}
+
+const transform_state = (data): Representative => {
+  return {
+    name: `${data.full_name} (${data.party[0]})`,
+    title: `State ${data.district}`,
+    email: `mailto:${data.email}`,
+    phone: `Phone: ${data.office_phone || 'Unavailable'}`
+  }
 }
 
 const get_representatives = (address: string) => {
@@ -32,22 +47,22 @@ const get_representatives = (address: string) => {
   return fetch(url)
     .then((response) => { return response.json()})
     .then((data) => {
-      let feds = data.federal.map(fed_to_rep);
-      let state = data.state.map(state_to_rep);
-      return feds.concat(state);
+      let feds = data.federal.map(transform_fed);
+      let states = data.state.map(transform_state);
+      return [feds, states]
     });
 }
 
 class Search extends Component {
   constructor(props) {
     super(props);
-    this.state = {results: []}
+    this.state = {feds: [], states: []}
   }
 
   onSubmit = (value) => {
     let request = get_representatives(value)
-    request.then((results: Representative[]) => {
-      this.setState({results: results})
+    request.then(([feds, states]) => {
+      this.setState({feds: feds, states: states})
     })
   }
 
@@ -55,7 +70,8 @@ class Search extends Component {
     return (
       <div>
         <SearchForm onSubmit={this.onSubmit} />
-        <SearchResults results={this.state.results} />
+        <SearchResults feds={this.state.feds}
+                       states={this.state.states} />
       </div>
     )
   }
@@ -81,21 +97,44 @@ class SearchForm extends Component {
 class SearchResults extends Component {
 
   render() {
-    const results : Representative[] = this.props.results
+    const {feds, states} = this.props
     return (
-      <ul>
-      {results.map((result, index) =>
-        <SearchResult key={index} result={result} />
-      )}
-       </ul>
+      <div>
+        <SearchSection name='Federal' data={feds} />
+        <SearchSection name='State' data={states} />
+      </div>
     )
+  }
+}
+
+class SearchSection extends Component {
+  render() {
+    const {name, data} = this.props
+    if (data.length > 0) {
+      return (
+          <section>
+            <h3>{name}</h3>
+            <ul>
+            {data.map((result, index) =>
+              <SearchResult key={index} result={result} />
+            )}
+            </ul>
+          </section>
+        )
+    } else { return null; }
   }
 }
 
 class SearchResult extends Component {
   render() {
+    let {name, title, phone, email} = this.props.result
     return (
-      <li> {this.props.result.name} </li>
+      <li>
+        <div>{name}</div>
+        <div>{title}</div>
+        <div>{phone}</div>
+        <div><a href={email}>Email</a></div>
+      </li>
     )
   }
 }
