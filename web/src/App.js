@@ -28,7 +28,7 @@ const transform_fed = (data): Representative => {
   return {
     name: `${data.first_name} ${data.last_name} (${data.party})`,
     title: `Federal ${data.chamber} ${data.district || ''}`,
-    email: `mailto:${data.oc_email}`,
+    email: `${data.oc_email}`,
     phone: `Phone: ${data.phone}`
   }
 }
@@ -37,7 +37,7 @@ const transform_state = (data): Representative => {
   return {
     name: `${data.full_name} (${data.party[0]})`,
     title: `State ${data.district}`,
-    email: `mailto:${data.email}`,
+    email: `${data.email}`,
     phone: `Phone: ${data.office_phone || 'Unavailable'}`
   }
 }
@@ -114,27 +114,60 @@ class SearchSection extends Component {
       return (
           <section>
             <h3>{name}</h3>
-            <ul>
-            {data.map((result, index) =>
-              <SearchResult key={index} result={result} />
-            )}
-            </ul>
+            <ResultList data={data}/>
           </section>
         )
     } else { return null; }
   }
 }
 
+class ResultList extends Component {
+  render() {
+    return (
+      <ul className="result-list">
+      {this.props.data.map((result, index) =>
+        <SearchResult key={index} result={result} />
+      )}
+      </ul>
+    )
+  }
+}
+
+class EmailLink extends Component {
+  render() {
+    let email = this.props.email;
+    if (email !== "undefined") {
+      let href = `mailto:${email}`
+      return (
+        <a href={href}>Email</a>
+      )
+    }
+    return (
+      <div>No email listed</div>
+    )
+  }
+}
+
 class SearchResult extends Component {
   render() {
-    let {name, title, phone, email} = this.props.result
+    let {name, title, phone, email} = this.props.result;
+    let mailto = <EmailLink email={email} />;
     return (
-      <li>
-        <div>{name}</div>
-        <div>{title}</div>
-        <div>{phone}</div>
-        <div><a href={email}>Email</a></div>
+      <li className="search-result">
+        <ResultField value={name} />
+        <ResultField value={title} />
+        <ResultField value={phone} />
+        <ResultField value={mailto} />
       </li>
+    )
+  }
+}
+
+class ResultField extends Component {
+  render() {
+    let value = this.props.value;
+    return (
+      <div className="result-field">{value}</div>
     )
   }
 }
