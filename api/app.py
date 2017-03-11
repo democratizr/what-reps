@@ -57,6 +57,7 @@ def index():
             '/': 'This page.',
             '/state-reps/?lat={lat}&?lng={lng}': 'Just the state representatives',
             '/fed-reps/?lat={lat}&?lng={lng}': 'Just the federal representatives',
+            '/location/{address}'
             '/search/{address}': "Find all Federal and State representatives for this address."
         }
     }
@@ -70,7 +71,15 @@ def searchview(address):
         raise BadRequestError('Cannot find address: ' + address)
 
 
-@app.route('/fed-reps/')
+@app.route('/location/{address}', cors=True)
+def locationview(address):
+    try:
+        lat, lng = get_coordinates(address)
+        return {'lat': lat, 'lng': lng}
+    except:
+        raise BadRequestError('Cannot find address: ' + address)
+
+@app.route('/fed-reps/', cors=True)
 def fedview():
     params = app.current_request.query_params
     lat = params.get('lat')
@@ -78,7 +87,7 @@ def fedview():
     return feds(lat, lng)
 
 
-@app.route('/state-reps/')
+@app.route('/state-reps/', cors=True)
 def fedview():
     params = app.current_request.query_params
     lat = params.get('lat')
